@@ -19,7 +19,8 @@ module.exports = {
 	before: [],
 	
 	manipulate: [
-		'replace2AbsoluteURL'
+		'replace2AbsoluteURL',
+		'removeJsdom'
 	],
 	
 	after: [], //['debug']
@@ -73,6 +74,10 @@ var replaceDirname2URL = function(path, context) {
 
 module.exports.proc_for_elements = {
 
+	removeJsdom: function($) {
+		$('.jsdom').remove();
+	},
+	
 	replace2AbsoluteURL: function($, context) {
 		var target = module.exports.target;
 		for (var i=0; i<this.URLReplaceTargets.length; i++) {
