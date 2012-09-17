@@ -16,11 +16,13 @@ A proxy server to decorate a html/xml document with jQuery.
 ```bash
 npm install node-decorate
 ```
+Comming soon !
 
 ## Usage
 
 ### Hello, world
 1. Edit /src/custom.js
+
 ```javascript
 module.exports = {
   append_manipulate : ['hello']
@@ -34,6 +36,7 @@ module.exports.proc_for_elements = {
 ```
 
 2. Start a proxy.
+
 ```bash
 node index.js
 ```
