@@ -129,7 +129,7 @@ var decorate = module.exports.decorate = function(req, res, next) {
 					console.log('[jsdom-env] %s', errors);
 				}
 				for ( i = 0; i < context.manipulate.length; i++) {
-					context.proc_for_elements[context.manipulate[i]](window.$, context);
+					context.proc_for_elements[context.manipulate[i]](window.$, context, window.document);
 				}
 				
 				res._document = window.document.innerHTML;
@@ -191,7 +191,6 @@ var getCustomContext = module.exports.getCustomContext = function(signature) {
 	if (signature === undefined || signature.length == 0) {
 		signature = '.';
 	}
-	console.log('signature: %s', signature);// for debug
 	return require('./src/' + signature + '/custom.js');
 };
 
@@ -199,7 +198,11 @@ var overrideContext = function(base, context) {
 	var overridden = base || {};
 	try {
 		for (var key in context) {
-			if (/^append_(before|manipulate|after)/.test(key)) {
+			if (/^prepend_(before|manipulate|after)/.test(key)) {
+				var commands = key.split('_');
+				overridden[commands[1]] = context[key].concat(overridden[commands[1]]);
+			}
+			else if (/^append_(before|manipulate|after)/.test(key)) {
 				var commands = key.split('_');
 				overridden[commands[1]] = overridden[commands[1]].concat(context[key]);
 			}
