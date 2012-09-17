@@ -16,7 +16,6 @@ var init = module.exports.init = function() {
 	
 	// settings
 	config = module.exports.config = require('./config.js');
-	context = {};
 	default_context = getDefaultContext();
 	default_context.dirname = __dirname;
 	
@@ -48,7 +47,7 @@ var init = module.exports.init = function() {
 
 var build_context = module.exports.build_context = function(req, res, next) {
 	try {
-		context = default_context;
+		context = overrideContext({}, default_context);
 		context.request = req.headers;
 		context.request.base = config.serverURL + req.path;
 		
@@ -200,13 +199,16 @@ var overrideContext = function(base, context) {
 		for (var key in context) {
 			if (/^prepend_(before|manipulate|after)/.test(key)) {
 				var commands = key.split('_');
+				if (!overridden[commands[1]]) overridden[commands[1]] = [];
 				overridden[commands[1]] = context[key].concat(overridden[commands[1]]);
 			}
 			else if (/^append_(before|manipulate|after)/.test(key)) {
 				var commands = key.split('_');
+				if (!overridden[commands[1]]) overridden[commands[1]] = [];
 				overridden[commands[1]] = overridden[commands[1]].concat(context[key]);
 			}
 			else if (/^proc_for_(text|elements)/.test(key)) {
+				if (!overridden[key]) overridden[key] = {};
 				for (var funcname in context[key]) {
 					overridden[key][funcname] = context[key][funcname];
 				}

@@ -79,7 +79,7 @@ module.exports.proc_for_elements = {
 	},
 	
 	replace2AbsoluteURL: function($, context) {
-		var target = module.exports.target;
+		var target = context.target;
 		for (var i=0; i<this.URLReplaceTargets.length; i++) {
 			var tag = this.URLReplaceTargets[i].tag;
 			var attr = this.URLReplaceTargets[i].attr;
