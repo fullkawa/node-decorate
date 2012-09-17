@@ -3,8 +3,6 @@ var jsdom, Iconv, logger;
 var config, context, default_context;
 var jq_src;
 
-var NO_SIGNATURE = '_none_';
-
 var init = module.exports.init = function() {
 	// modules
 	express = require('express');
@@ -57,8 +55,8 @@ var build_context = module.exports.build_context = function(req, res, next) {
 		context = overrideContext(context, parseRequestPath(req.url));
 		console.info('target_url-> %s', context.target.href);
 
-		context = overrideContext(context, getCustomContext());
-		//console.dir(context); // for debug
+		context = overrideContext(context, getCustomContext(context.signature));
+		console.dir(context); // for debug
 
 		next();
 	}
@@ -160,18 +158,20 @@ var parseRequestPath = module.exports.parseRequestPath = function(reqPath) {
 		var separator = (reqPath.indexOf('/https/') > 0) ? '/https/' : '/http/';
 
 		var parts = reqPath.split(separator);
-		if (parts.length == 1)
-			throw 'No protocol in "' + reqPath + '"';
+		if (parts.length == 1) throw 'No protocol in "' + reqPath + '"';
 
 		var target = parsed.target = url.parse(separator.substring(1, separator.length - 1) + '://' + parts[1]);
 		target.base = target.href.substring(0, target.href.lastIndexOf('/') + 1);
 
 		var signend = parts[0].indexOf('/', 1);
-		parsed.signature = parts[0].substring(1, signend);
-		if (parsed.signature.length == 1)
-			parsed.signature = NO_SIGNATURE;
-
-		parsed.options = (signend == -1) ? '' : parts[0].substring(signend + 1);
+		if (signend == -1) {
+			parsed.signature = parts[0].substring(1);
+			parsed.options = '';
+		}
+		else {
+			parsed.signature = parts[0].substring(1, signend);
+			parsed.options = parts[0].substring(signend + 1);
+		}
 	}
 	catch(e) {
 		console.log('[parseRequestPath] %s', e);
@@ -188,9 +188,10 @@ var getDefaultContext = module.exports.getDefaultContext = function() {
 };
 
 var getCustomContext = module.exports.getCustomContext = function(signature) {
-	if (signature === undefined || NO_SIGNATURE === signature) {
+	if (signature === undefined || signature.length == 0) {
 		signature = '.';
 	}
+	console.log('signature: %s', signature);// for debug
 	return require('./src/' + signature + '/custom.js');
 };
 
