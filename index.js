@@ -52,10 +52,10 @@ var build_context = module.exports.build_context = function(req, res, next) {
 		context.request.base = config.serverURL + req.path;
 		
 		context = overrideContext(context, parseRequestPath(req.url));
-		console.info('target_url-> %s', context.target.href);
+		if ('test' !== process.env.NODE_ENV) console.info('target_url-> %s', context.target.href);
 
 		context = overrideContext(context, getCustomContext(context.signature));
-		console.dir(context); // for debug
+		if ('test' !== process.env.NODE_ENV) console.dir(context); // for debug
 
 		next();
 	}
@@ -152,7 +152,7 @@ var decorate = module.exports.decorate = function(req, res, next) {
 var postprocess = module.exports.postprocess = [];
 
 var parseRequestPath = module.exports.parseRequestPath = function(reqPath) {
-	parsed = {};
+	var parsed = {};
 	try {
 		var separator = (reqPath.indexOf('/https/') > 0) ? '/https/' : '/http/';
 
@@ -237,8 +237,10 @@ var getEncoding = function(response, chunk, original_encoding) {
 				}
 			}
 			else {
-				console.log('[getEncoding] No "Content-Type" in response header: ');
-				console.dir(response._headers);
+				if ('test' !== process.env.NODE_ENV) {
+					console.log('[getEncoding] No "Content-Type" in response header: ');
+					console.dir(response._headers);
+				}
 			}
 			
 			if (!encoding) {
@@ -250,7 +252,7 @@ var getEncoding = function(response, chunk, original_encoding) {
 					console.log('[getEncoding] No charset in chunk: %s', chunk_target);
 				}
 			}
-			console.log('[getEncoding] encoding-> %s', encoding);
+			if ('test' !== process.env.NODE_ENV) console.log('[getEncoding] encoding-> %s', encoding);
 		}
 	}
 	catch(e) {
@@ -287,7 +289,7 @@ var convertEnc = function(response, chunk, encoding) {
 
 init();
 var app = express();
-app.use(logger);
+if ('test' !== process.env.NODE_ENV) app.use(logger);
 app.use(build_context);
 for (var i=0; i<preprocess.length; i++) {
 	app.use(preprocess[i]);

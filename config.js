@@ -10,12 +10,12 @@ module.exports = {
 	 *  Run on this port number.
 	 */
 	port : 8124,
-	// port : 80 // If you use this, you must start index.js with "sudo" command.
+	// port : 80, // If you use this, you must start index.js with "sudo" command.
 
 	/**
 	 * serverURL :
 	 */
-	serverURL: 'http://127.0.0.1:8124',
+	serverURL : 'http://127.0.0.1:8124',
 	
 	/**
 	 * useLocalJquery :
