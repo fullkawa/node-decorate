@@ -91,7 +91,7 @@ module.exports.proc_for_elements = {
 				}
 				//console.log('<%s %s="%s">', elm._tagName, attr, elm[attr]); // for debug
 				
-				if ('' !== elm[attr] && !(/^http/.test(elm[attr]))) {
+				if ('' !== elm[attr] && !(/^http/.test(elm[attr])) && !(/^\/\//.test(elm[attr]))) {
 					elm[attr] = target.base + elm[attr];
 				}
 				/* for debug
