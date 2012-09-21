@@ -1,3 +1,7 @@
+var
+	url = require('url'),
+	path = require('path');
+
 module.exports = {
 	/**
 	 * skipIconv:
@@ -50,25 +54,37 @@ var getParent = function(path) {
 	return parent;
 }
 
-var replaceDirname2URL = function(path, context) {
-	var url = path;
+var replaceDirname2URL = function(reqpath, context) {
+	var url = reqpath;
 	try {
 		var dirname = context.dirname;
-		var req_base = getParent(context.request.base);
+		var reqcurr = context.request.current;
 		do {
-			if (path.indexOf(dirname) == 0) { // equal path.startsWith(dirname)
-				url = path.replace(dirname, req_base);
+			if (reqpath.indexOf(dirname) == 0) { // equal reqpath.startsWith(dirname)
+				if ('index.js' === reqpath.slice('index.js'.length * -1)) { // equal reqpath.endsWith('index.js')
+					url = reqpath.replace(dirname + '/index.js', context.request.base) + '/';
+				}
+				else {
+					url = reqpath.replace(dirname, reqcurr);
+				}
 				break;
 			}
 			dirname = getParent(dirname);
-			req_base = getParent(req_base);
+			reqcurr = getParent(reqcurr);
 		}
 		while(dirname.length > 1)
+		
+		if ('/' === url.substring(0,1)) {
+			url = context.request.base + url;
+		}
 	}
 	catch(e) {
 		console.log('[replaceDirname2URL] %s', e);
 	}
-	//console.log('[replaceDirname2URL] replaced-> %s', url); // for debug
+	/* for debug
+	console.log('[replaceDirname2URL] original: %s', reqpath);
+	console.log('[replaceDirname2URL] replaced: -> %s', url);
+	*/
 	return url;
 };
 

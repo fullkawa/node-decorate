@@ -1,4 +1,4 @@
-var express, cluster, fs, http, url;
+var express, cluster, fs, http, url, path;
 var jsdom, Iconv, logger;
 var config, context, default_context;
 var jq_src;
@@ -10,6 +10,7 @@ var init = module.exports.init = function() {
 	fs = require('fs');
 	http = require('http');
 	url = require('url');
+	path = require('path');
 	jsdom = require('jsdom');
 	Iconv = module.exports.iconv = require('iconv-jp').Iconv;
 	// ERROR: Iconv = require('iconv').Iconv;
@@ -49,14 +50,15 @@ var build_context = module.exports.build_context = function(req, res, next) {
 	try {
 		context = overrideContext({}, default_context);
 		context.request = req.headers;
-		context.request.base = config.serverURL + req.path;
 		
-		context = overrideContext(context, parseRequestPath(req.url));
+		context = overrideContext(context, parseRequestPath(req.path));
 		if ('test' !== process.env.NODE_ENV) console.info('target_url-> %s', context.target.href);
 
 		context = overrideContext(context, getCustomContext(context.signature));
 		if ('test' !== process.env.NODE_ENV) console.dir(context); // for debug
 
+		context.request.base = config.serverURL + '/http/' + context.target.host;
+		context.request.current = path.dirname(config.serverURL + req.path);
 		next();
 	}
 	catch(e) {
@@ -154,12 +156,12 @@ var postprocess = module.exports.postprocess = [];
 var parseRequestPath = module.exports.parseRequestPath = function(reqPath) {
 	var parsed = {};
 	try {
-		var separator = (reqPath.indexOf('/https/') > 0) ? '/https/' : '/http/';
+		var separator = (reqPath.indexOf('/https/i') > 0) ? '/https/' : '/http/';
 
 		var parts = reqPath.split(separator);
 		if (parts.length == 1) throw 'No protocol in "' + reqPath + '"';
 
-		var target = parsed.target = url.parse(separator.substring(1, separator.length - 1) + '://' + parts[1]);
+		var target = parsed.target = url.parse(separator.substring(1, separator.length - 1) + '://' + parts[1].toLowerCase());
 		target.base = target.href.substring(0, target.href.lastIndexOf('/') + 1);
 
 		var signend = parts[0].indexOf('/', 1);
@@ -249,7 +251,7 @@ var getEncoding = function(response, chunk, original_encoding) {
 					encoding = RegExp.$1.toLowerCase();
 				}
 				else {
-					console.log('[getEncoding] No charset in chunk: %s', chunk_target);
+					if ('test' !== process.env.NODE_ENV) console.log('[getEncoding] No charset in chunk: %s', chunk_target);
 				}
 			}
 			if ('test' !== process.env.NODE_ENV) console.log('[getEncoding] encoding-> %s', encoding);
@@ -281,7 +283,7 @@ var convertEnc = function(response, chunk, encoding) {
 		}
 	}
 	catch(e) {
-		console.log('[convertEnc] encoding:%s, %s', encoding, e);
+		if ('test' !== process.env.NODE_ENV) console.log('[convertEnc] encoding:%s, %s', encoding, e);
 		// No Problem; console.log(chunk.toString());
 	}
 	return converted;

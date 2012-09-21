@@ -7,10 +7,22 @@ var
 
 describe('node-decorate', function() {
 	
-	describe('/http/s3-ap-northeast-1.amazonaws.com/node-decorate-tests/index.html', function() {
+	describe('/http/node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/index.html', function() {
 		it('send a response code: 200', function(done) {
 			var doc = fs.readFileSync(__dirname + '/check_docs/index.html').toString();
-			request('/http/s3-ap-northeast-1.amazonaws.com/node-decorate-tests/index.html', done).expects(200, doc);
+			request('/http/node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/index.html', done).expects(200, doc);
+		});
+	});
+	describe('/http/node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/tests/a.html', function() {
+		it('send a response code: 200', function(done) {
+			var doc = fs.readFileSync(__dirname + '/check_docs/tests_a.html').toString();
+			request('/http/node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/tests/a.html', done).expects(200, doc);
+		});
+	});
+	describe('/http/node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/tests/path/to/document.html', function() {
+		it('send a response code: 200', function(done) {
+			var doc = fs.readFileSync(__dirname + '/check_docs/tests_path_to_document.html').toString();
+			request('/http/node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/tests/path/to/document.html', done).expects(200, doc);
 		});
 	});
 });
@@ -30,6 +42,7 @@ var request = function(target, done) {
 			var req = http.get(_req_options, function(res) {
 				var buf = [];
 				res.on('data', function(chunk) {
+					//console.log('status code: %s', statusCode); // for debug
 					res.should.have.status(statusCode);
 					buf.push(chunk);
 				})
@@ -40,6 +53,15 @@ var request = function(target, done) {
 					}
 					else {
 						var document = buf.join('');
+						/* FIXME: delete
+						console.log('----');
+						console.log('[%s] %s', typeof(document), md5(document));
+						console.log(document);
+						console.log('----');
+						console.log('[%s] %s', typeof(body), md5(body));
+						console.log(body);
+						console.log('----');
+						*/
 						document.should.be.equal(body);
 					}
 					done();
