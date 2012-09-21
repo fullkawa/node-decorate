@@ -28,8 +28,8 @@ describe('node-decorate', function() {
 		describe('build_context', function() {
 			
 			describe('context', function() {
-				var default_context = decorate.getDefaultContext;
-				var custom_context = decorate.getCustomContext;
+				var default_context = decorate.getDefaultContext();
+				var custom_context = decorate.getCustomContext();
 				
 				it('consists of four factors - default, config, request path and custom', function() {
 					default_context.should.be.ok;
@@ -37,11 +37,21 @@ describe('node-decorate', function() {
 				});
 				
 				describe('default_context', function() {
-					it('is common');
+					it('is defined by src/default.js', function() {
+						var def = fs.readFileSync(__dirname + '/../src/default.js').toString();
+						def.should.be.not.equal('');
+					});
 				});
 				
 				describe('custom_context', function() {
-					it('is unique for each user/service/etc.')
+					it('is defined by src/SIGNATURE/custom.js for each user/service/etc.', function() {
+						var tested = decorate.overrideContext({}, decorate.getDefaultContext());
+						tested = decorate.overrideContext(tested, decorate.getCustomContext('_test'));
+						
+						tested.before.length.should.be.equal(1);
+						tested.manipulate.length.should.be.equal(5);
+						tested.after.length.should.be.equal(2);
+					});
 				});
 			});
 		});

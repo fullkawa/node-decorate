@@ -25,6 +25,13 @@ describe('node-decorate', function() {
 			request('/http/node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/tests/path/to/document.html', done).expects(200, doc);
 		});
 	});
+
+	describe('/_test/Node.js%20!/http/node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/', function() {
+		it('send a response code: 200', function(done) {
+			var doc = fs.readFileSync(__dirname + '/check_docs/index.html#_test').toString();
+			request('/_test/Node.js%20!/http/node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/', done).expects(200, doc);
+		});
+	});
 });
 
 var request = function(target, done) {
@@ -53,15 +60,6 @@ var request = function(target, done) {
 					}
 					else {
 						var document = buf.join('');
-						/* FIXME: delete
-						console.log('----');
-						console.log('[%s] %s', typeof(document), md5(document));
-						console.log(document);
-						console.log('----');
-						console.log('[%s] %s', typeof(body), md5(body));
-						console.log(body);
-						console.log('----');
-						*/
 						document.should.be.equal(body);
 					}
 					done();

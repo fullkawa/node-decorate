@@ -1,7 +1,5 @@
-var express, cluster, fs, http, url, path;
-var jsdom, Iconv, logger;
-var config, context, default_context;
-var jq_src;
+var express, cluster, fs, http, url, path, jsdom, Iconv, logger;
+var config, default_context, jq_src;
 
 var init = module.exports.init = function() {
 	// modules
@@ -17,6 +15,7 @@ var init = module.exports.init = function() {
 	
 	// settings
 	config = module.exports.config = require('./config.js');
+
 	default_context = getDefaultContext();
 	default_context.dirname = __dirname;
 	
@@ -24,11 +23,13 @@ var init = module.exports.init = function() {
 		jq_src = fs.readFileSync(__dirname + '/lib/jquery.min.js').toString();
 	}
 
+	// logging
 	logger = express.logger('dev');
 	if ('production' === process.env.NODE_ENV) {
 		logger = express.logger();
 	}
 
+	// clustering
 	if (cluster.isMaster) {
 		console.log(__filename + ' started at %s .', new Date());
 		console.log('env: %s', process.env.NODE_ENV);
@@ -48,7 +49,7 @@ var init = module.exports.init = function() {
 
 var build_context = module.exports.build_context = function(req, res, next) {
 	try {
-		context = overrideContext({}, default_context);
+		var context = initContext();
 		context.request = req.headers;
 		
 		context = overrideContext(context, parseRequestPath(req.path));
@@ -58,7 +59,18 @@ var build_context = module.exports.build_context = function(req, res, next) {
 		if ('test' !== process.env.NODE_ENV) console.dir(context); // for debug
 
 		context.request.base = config.serverURL + '/http/' + context.target.host;
-		context.request.current = path.dirname(config.serverURL + req.path);
+		if ('/' === req.path.slice(-1)) {
+			context.request.current = config.serverURL + req.path.substring(0, req.path.length - 1);
+		}
+		else {
+			context.request.current = path.dirname(config.serverURL + req.path);
+		}
+		/* for debug
+		console.log('req.path-> %s', req.path);
+		console.dir(context);
+		*/
+		
+		req.context = context;
 		next();
 	}
 	catch(e) {
@@ -71,6 +83,7 @@ var build_context = module.exports.build_context = function(req, res, next) {
 var preprocess = module.exports.preprocess = [];
 
 var get_document = module.exports.get_document = function(req, res, next) {
+	var context = req.context;
 	try {
 		if (!context.target.href)
 			throw new Error('No target url.');
@@ -113,41 +126,52 @@ var get_document = module.exports.get_document = function(req, res, next) {
 }
 
 var decorate = module.exports.decorate = function(req, res, next) {
-	for (var i = 0; i < context.before.length; i++) {
-		res._document = context.proc_for_text[context.before[i]](res._document, context);
-	}
-
-	if (context.skipJsdom) {
-		res.end(res._document);
-	}
-	else {
-		var jsdom_conf = {
-			html : res._document,
-			done : function(errors, window) {
-				if (errors) {
-					res.writeHead(400, '[jsdom-env] ' + errors);
-					res.end();
-					console.log('[jsdom-env] %s', errors);
-				}
-				for ( i = 0; i < context.manipulate.length; i++) {
-					context.proc_for_elements[context.manipulate[i]](window.$, context, window.document);
-				}
-				
-				res._document = window.document.innerHTML;
-				for ( i = 0; i < context.after.length; i++) {
-					res._document = context.proc_for_text[context.after[i]](res._document, context);
-				}
-				//console.log(res._document);
-				res.end(res._document);
-			}
-		};
-		if (config.useLocalJquery) {
-			jsdom_conf.src = [ jq_src ];
+	var context = req.context;
+	try {
+		if (!res._document || res._document.length == 0) throw "No document in response.";
+		for (var i = 0; i < context.before.length; i++) {
+			res._document = context.proc_for_text[context.before[i]](res._document, context);
+			if (!res._document || res._document.length == 0) throw "No document returns from '" + context.before[i] + "'";
+		}
+	
+		if (context.skipJsdom) {
+			res.end(res._document);
 		}
 		else {
-			jsdom_conf.scripts = [ config.jqueryCDN ];
+			var jsdom_conf = {
+				html : res._document,
+				done : function(errors, window) {
+					if (errors) {
+						res.writeHead(400, '[jsdom-env] ' + errors);
+						res.end();
+						console.log('[jsdom-env] %s', errors);
+					}
+					for ( i = 0; i < context.manipulate.length; i++) {
+						context.proc_for_elements[context.manipulate[i]](window.$, context, window.document);
+					}
+					
+					res._document = window.document.innerHTML;
+					for ( i = 0; i < context.after.length; i++) {
+						res._document = context.proc_for_text[context.after[i]](res._document, context);
+						if (!res._document || res._document.length == 0) throw "No document returns from '" + context.after[i] + "'";
+					}
+					//console.log(res._document);
+					res.end(res._document);
+				}
+			};
+			if (config.useLocalJquery) {
+				jsdom_conf.src = [ jq_src ];
+			}
+			else {
+				jsdom_conf.scripts = [ config.jqueryCDN ];
+			}
+			jsdom.env(jsdom_conf);
 		}
-		jsdom.env(jsdom_conf);
+	}
+	catch(e) {
+		res.writeHead(400, '[decorate] ' + e);
+		res.end();
+		console.log('[decorate] ', e);
 	}
 };
 
@@ -171,7 +195,7 @@ var parseRequestPath = module.exports.parseRequestPath = function(reqPath) {
 		}
 		else {
 			parsed.signature = parts[0].substring(1, signend);
-			parsed.options = parts[0].substring(signend + 1);
+			parsed.options = decodeURIComponent(parts[0].substring(signend + 1));
 		}
 	}
 	catch(e) {
@@ -195,7 +219,11 @@ var getCustomContext = module.exports.getCustomContext = function(signature) {
 	return require('./src/' + signature + '/custom.js');
 };
 
-var overrideContext = function(base, context) {
+var initContext = function() {
+	return overrideContext({}, default_context);
+};
+
+var overrideContext = module.exports.overrideContext = function(base, context) {
 	var overridden = base || {};
 	try {
 		for (var key in context) {
@@ -294,7 +322,7 @@ var app = express();
 if ('test' !== process.env.NODE_ENV) app.use(logger);
 app.use(build_context);
 for (var i=0; i<preprocess.length; i++) {
-	app.use(preprocess[i]);
+	app.use(preprocess[i]);l
 }
 app.use(get_document);
 app.use(decorate);

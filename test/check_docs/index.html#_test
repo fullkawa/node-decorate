@@ -1,0 +1,44 @@
+
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+        <title>html5 Sample Document</title>
+        <meta name="description" content="This is a sample document in html5." />
+        <meta name="viewport" content="width=device-width" />
+
+        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+
+        <link rel="stylesheet" href="http://node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/css/normalize.css" />
+        <link rel="stylesheet" href="http://node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/css/main.css" />
+        <script src="http://node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/js/vendor/modernizr-2.6.1.min.js" id="script-1"></script>
+
+        <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
+        <script id="script-2">
+            var _gaq=[['_setAccount','UA-XXXXX-X'],['_trackPageview']];
+            (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+            g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+            s.parentNode.insertBefore(g,s)}(document,'script'));
+        </script>
+    <script type="text/javascript" id="script-3">console.log('[custom.js] inserts this script here !');</script></head>
+    <body onload="alert('Hello, Node.js !');"><div>target.href &gt;&gt; http://node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/</div>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
+        <![endif]-->
+
+        <!-- Add your site or application content here -->
+        <h1>html5 Sample Document</h1>
+        <p>Hello world! This is html5 Boilerplate.</p>
+        
+        <h2>Tests</h2>
+        <a href="http://127.0.0.1:8124/_test/Node.js%20!/http/node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/tests/a.html">a</a>,&nbsp;
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js" id="script-4"></script>
+        <script id="script-5">window.jQuery || document.write('<script src="js/vendor/jquery-1.8.0.min.js"><\/script>')</script>
+        <script src="http://node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/js/plugins.js" id="script-6"></script>
+        <script src="http://node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/js/main.js" id="script-7"></script>
+    </body>
+</html>
