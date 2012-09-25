@@ -54,40 +54,6 @@ var getParent = function(path) {
 	return parent;
 }
 
-var replaceDirname2URL = function(reqpath, context) {
-	var url = reqpath;
-	try {
-		var dirname = context.dirname;
-		var reqcurr = context.request.current;
-		do {
-			if (reqpath.indexOf(dirname) == 0) { // equal reqpath.startsWith(dirname)
-				if ('index.js' === reqpath.slice('index.js'.length * -1)) { // equal reqpath.endsWith('index.js')
-					url = reqpath.replace(dirname + '/index.js', context.request.base) + '/';
-				}
-				else {
-					url = reqpath.replace(dirname, reqcurr);
-				}
-				break;
-			}
-			dirname = getParent(dirname);
-			reqcurr = getParent(reqcurr);
-		}
-		while(dirname.length > 1)
-		
-		if ('/' === url.substring(0,1)) {
-			url = context.request.base + url;
-		}
-	}
-	catch(e) {
-		console.log('[replaceDirname2URL] %s', e);
-	}
-	/* for debug
-	console.log('[replaceDirname2URL] original: %s', reqpath);
-	console.log('[replaceDirname2URL] replaced: -> %s', url);
-	*/
-	return url;
-};
-
 module.exports.proc_for_elements = {
 
 	removeJsdom: function($) {
@@ -95,20 +61,36 @@ module.exports.proc_for_elements = {
 	},
 	
 	replace2AbsoluteURL: function($, context) {
-		var target = context.target;
 		for (var i=0; i<this.URLReplaceTargets.length; i++) {
 			var tag = this.URLReplaceTargets[i].tag;
 			var attr = this.URLReplaceTargets[i].attr;
 			
 			$(tag).each(function(i, elm) {
 				//console.log('<%s %s="%s">', elm._tagName, attr, elm[attr]); // for debug
-				if ('a' === tag && '' !== elm[attr] && !(/^http/.test(elm[attr]))) {
-					elm[attr] = replaceDirname2URL(elm[attr], context);
-				}
-				//console.log('<%s %s="%s">', elm._tagName, attr, elm[attr]); // for debug
-				
-				if ('' !== elm[attr] && !(/^http/.test(elm[attr])) && !(/^\/\//.test(elm[attr]))) {
-					elm[attr] = target.base + elm[attr];
+				if (('' !== elm[attr]) && (elm[attr].indexOf(':') == -1)) {
+					if (/(a|form)/.test(tag)) {
+						/*
+						 * WARNING !!: elm[attr] is not URL !
+						 */
+						var attrVal = elm._attributes.href._nodeValue;
+						
+						if ('/' === attrVal.substring(0, 1)) {
+							attrVal = '/' + context.target.host + attrVal;
+						}
+						else {
+							var absolute = url.resolve(context.target.href, attrVal);
+							attrVal = absolute.replace(context.target.protocol + '//', '/');
+						}
+						elm[attr] = context.request.base + attrVal;
+					}
+					else {
+						if ('//' === elm[attr].substring(0, 2)) {
+							// do nothing
+						}
+						else {
+							elm[attr] = url.resolve(context.target.href, elm[attr]);
+						}
+					}
 				}
 				/* for debug
 				console.log('<%s %s="%s">', elm._tagName, attr, elm[attr]);

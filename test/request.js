@@ -25,6 +25,12 @@ describe('node-decorate', function() {
 			request('/http/node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/tests/path/to/document.html', done).expects(200, doc);
 		});
 	});
+	describe('/http/node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/tests/path/to/more/and/more/document.html', function() {
+		it('send a response code: 200', function(done) {
+			var doc = fs.readFileSync(__dirname + '/check_docs/tests_path_to_more_and_more_document.html').toString();
+			request('/http/node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/tests/path/to/more/and/more/document.html', done).expects(200, doc);
+		});
+	});
 
 	describe('/_test/Node.js%20!/http/node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/', function() {
 		it('send a response code: 200', function(done) {

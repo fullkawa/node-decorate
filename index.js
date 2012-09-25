@@ -54,17 +54,18 @@ var build_context = module.exports.build_context = function(req, res, next) {
 		
 		context = overrideContext(context, parseRequestPath(req.path));
 		if ('test' !== process.env.NODE_ENV) console.info('target_url-> %s', context.target.href);
+		var sign = context.signature;
+		var opts = context.options;
 
-		context = overrideContext(context, getCustomContext(context.signature));
+		context = overrideContext(context, getCustomContext(sign));
 		if ('test' !== process.env.NODE_ENV) console.dir(context); // for debug
 
-		context.request.base = config.serverURL + '/http/' + context.target.host;
-		if ('/' === req.path.slice(-1)) {
-			context.request.current = config.serverURL + req.path.substring(0, req.path.length - 1);
-		}
-		else {
-			context.request.current = path.dirname(config.serverURL + req.path);
-		}
+		context.request.base =
+			config.serverURL + 
+			((sign && sign.length > 0) ? ('/' + sign) : '') +
+			((opts && opts.length > 0) ? ('/' + encodeURIComponent(opts)) : '') +
+			'/http';
+		context.request.current = config.serverURL + req.path;
 		/* for debug
 		console.log('req.path-> %s', req.path);
 		console.dir(context);
@@ -186,7 +187,6 @@ var parseRequestPath = module.exports.parseRequestPath = function(reqPath) {
 		if (parts.length == 1) throw 'No protocol in "' + reqPath + '"';
 
 		var target = parsed.target = url.parse(separator.substring(1, separator.length - 1) + '://' + parts[1].toLowerCase());
-		target.base = target.href.substring(0, target.href.lastIndexOf('/') + 1);
 
 		var signend = parts[0].indexOf('/', 1);
 		if (signend == -1) {
