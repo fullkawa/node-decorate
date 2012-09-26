@@ -28,23 +28,6 @@ var init = module.exports.init = function() {
 	if ('production' === process.env.NODE_ENV) {
 		logger = express.logger();
 	}
-
-	// clustering
-	if (cluster.isMaster) {
-		console.log(__filename + ' started at %s .', new Date());
-		console.log('env: %s', process.env.NODE_ENV);
-
-		if ("production" === process.env.NODE_ENV) {
-			for (var i = 0; i < config.clusterNum; i++) {
-				cluster.fork();
-			}
-		}
-		cluster.on('fork', function(worker) {
-			console.log('worker %s created.', worker.id);
-		}).on('exit', function(worker) {
-			console.log('worker %s died.', worker.id);
-		});
-	}
 };
 
 var build_context = module.exports.build_context = function(req, res, next) {
@@ -58,7 +41,7 @@ var build_context = module.exports.build_context = function(req, res, next) {
 		var opts = context.options;
 
 		context = overrideContext(context, getCustomContext(sign));
-		if ('test' !== process.env.NODE_ENV) console.dir(context); // for debug
+		//if ('test' !== process.env.NODE_ENV) console.dir(context); // for debug
 
 		context.request.base =
 			config.serverURL + 
@@ -96,6 +79,13 @@ var get_document = module.exports.get_document = function(req, res, next) {
 				response.on('data', function(chunk) {
 					/* for debug
 					console.log('[get_document] skipIconv:%s, %s << %s', context.skipIconv, original_encoding, context.target.href)
+					*/
+					/* for debug
+					var wk = 'm';
+					if (cluster.isWorker) {
+						wk = cluster.worker.id;
+					}
+					console.log('[%s] >> %s', wk, context.target.href);
 					*/
 					if (context.skipIconv) {
 						buf.push(chunk);
@@ -269,7 +259,7 @@ var getEncoding = function(response, chunk, original_encoding) {
 			else {
 				if ('test' !== process.env.NODE_ENV) {
 					console.log('[getEncoding] No "Content-Type" in response header: ');
-					console.dir(response._headers);
+					//console.dir(response._headers); // for debug
 				}
 			}
 			
@@ -279,7 +269,8 @@ var getEncoding = function(response, chunk, original_encoding) {
 					encoding = RegExp.$1.toLowerCase();
 				}
 				else {
-					if ('test' !== process.env.NODE_ENV) console.log('[getEncoding] No charset in chunk: %s', chunk_target);
+					var shorten = chunk_target.substring(0, 30).concat('...');
+					if ('test' !== process.env.NODE_ENV) console.log('[getEncoding] No charset in chunk: %j', shorten);
 				}
 			}
 			if ('test' !== process.env.NODE_ENV) console.log('[getEncoding] encoding-> %s', encoding);
@@ -317,16 +308,44 @@ var convertEnc = function(response, chunk, encoding) {
 	return converted;
 }
 
+var buildApp = function() {
+	var app = express();
+	if ('test' !== process.env.NODE_ENV) app.use(logger);
+	app.use(build_context);
+	for (var i=0; i<preprocess.length; i++) {
+		app.use(preprocess[i]);l
+	}
+	app.use(get_document);
+	app.use(decorate);
+	for (var i=0; i<preprocess.length; i++) {
+		app.use(postprocess[i]);
+	}
+	app.listen(config.port);
+};
+
+
+// start
 init();
-var app = express();
-if ('test' !== process.env.NODE_ENV) app.use(logger);
-app.use(build_context);
-for (var i=0; i<preprocess.length; i++) {
-	app.use(preprocess[i]);l
+
+// clustering
+if (cluster.isMaster) {
+	console.log(__filename + ' started at %s .', new Date());
+	console.log('env: %s', process.env.NODE_ENV);
+
+	if ('test' === process.env.NODE_ENV) {
+		buildApp();
+	}
+	else {
+		for (var i = 0; i < config.clusterNum; i++) {
+			cluster.fork();
+		}
+		cluster.on('fork', function(worker) {
+			if ("test" !== process.env.NODE_ENV) console.log('worker %s created.', worker.id);
+		}).on('exit', function(worker) {
+			if ("test" !== process.env.NODE_ENV) console.log('worker %s died.', worker.id);
+		});
+	}
 }
-app.use(get_document);
-app.use(decorate);
-for (var i=0; i<preprocess.length; i++) {
-	app.use(postprocess[i]);
+else { // worker
+	buildApp();
 }
-app.listen(config.port);
