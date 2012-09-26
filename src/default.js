@@ -72,23 +72,34 @@ module.exports.proc_for_elements = {
 						/*
 						 * WARNING !!: elm[attr] is not URL !
 						 */
-						var attrVal = elm._attributes.href._nodeValue;
+						var attrVal = '';
+						if ('a' === tag) {
+							if (elm._attributes.href) attrVal = elm._attributes.href._nodeValue;
+						}
+						else if ('form' === tag) {
+							console.log('attributes: %s', elm._attributes.action);
+							if (elm._attributes.action) attrVal = elm._attributes.action._nodeValue; // FIXME: check !
+						}
 						
-						if ('/' === attrVal.substring(0, 1)) {
-							attrVal = '/' + context.target.host + attrVal;
+						if (attrVal.length > 0) {
+							if ('/' === attrVal.substring(0, 1)) {
+								attrVal = '/' + context.target.host + attrVal;
+							}
+							else {
+								var absolute = url.resolve(context.target.href, attrVal);
+								attrVal = absolute.replace(context.target.protocol + '//', '/');
+							}
+							elm[attr] = context.request.base + attrVal;
 						}
-						else {
-							var absolute = url.resolve(context.target.href, attrVal);
-							attrVal = absolute.replace(context.target.protocol + '//', '/');
-						}
-						elm[attr] = context.request.base + attrVal;
 					}
 					else {
-						if ('//' === elm[attr].substring(0, 2)) {
-							// do nothing
-						}
-						else {
-							elm[attr] = url.resolve(context.target.href, elm[attr]);
+						if (elm[attr].length > 0) {
+							if ('//' === elm[attr].substring(0, 2)) {
+								// do nothing
+							}
+							else {
+								elm[attr] = url.resolve(context.target.href, elm[attr]);
+							}
 						}
 					}
 				}
