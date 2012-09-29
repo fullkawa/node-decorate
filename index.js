@@ -289,12 +289,6 @@ var convertEnc = function(response, chunk, encoding) {
 		if ('utf-8' !== encoding && 'ascii' !== encoding) {
 			var iconv = new Iconv(encoding, 'utf-8');
 			converted = iconv.convert(chunk);
-			var original_header = response.getHeader('Content-Type');
-			if (original_header) {
-				response.setHeader('Content-Type', original_header.replace(encoding, 'utf-8'));
-			} else {
-				response.setHeader('Content-Type', 'text/html; charset=utf-8'); // FIXME: case XML document
-			}
 			/* for debug
 			console.log('[convertEnc] original: %s', original_header);
 			console.log('[convertEnc] convert "%s" -> "utf-8"', encoding);
@@ -305,6 +299,7 @@ var convertEnc = function(response, chunk, encoding) {
 		if ('test' !== process.env.NODE_ENV) console.log('[convertEnc] encoding:%s, %s', encoding, e);
 		// No Problem; console.log(chunk.toString());
 	}
+	response.setHeader('Content-Type', 'text/html; charset=utf-8'); // FIXME: case XML document
 	return converted;
 }
 
