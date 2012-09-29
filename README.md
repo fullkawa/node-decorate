@@ -14,14 +14,13 @@ A proxy server to decorate a html/xml document with jQuery.
 
 ## Install
 ```bash
-npm install node-decorate
+$ npm install node-decorate
 ```
-Comming soon !
 
 ## Usage
 
 ### Hello, world
-1. Edit /src/custom.js
+Step1. Edit ``/src/custom.js``
 
 ```javascript
 module.exports = {
@@ -35,35 +34,59 @@ module.exports.proc_for_elements = {
 };
 ```
 
-2. Start a proxy.
-
+Step2. Start a proxy.
 ```bash
-node index.js
+$ node index.js
 ```
+on develop mode.
+```bash
+$ npm start
+```
+on production mode.
 
-3. Access any site through this proxy.
-ex.
-http://127.0.0.1:8124/http/nodejs.org/
+Step3. Access any site through this proxy.  
+ex) http://127.0.0.1:8124/http/nodejs.org/
 
 ### URL format
-* Host is this proxy.
-http://**127.0.0.1:8124**/http/nodejs.org/api/
-
-* Protocol of target URL (now, http only)
-http://127.0.0.1:8124**/http**/nodejs.org/api/
-
-* Host and path of target URL
-http://127.0.0.1:8124/http**/nodejs.org/api/**
+http://HOST/TAG_PROTOCOL/TAG_HOST_AND_PATH  
+- HOST is this proxy.  
+ex) ``127.0.0.1:8124`` or ``example.com``
+- TAG_PROTOCOL of target URL (now, ``http`` only)  
+- TAG_HOST_AND_PATH of target URL  
+ex) ``nodejs.org/api/`` or ``target.com/path/to/somewhere?param1=value1``
 
 ## Tips
 
-### Start a proxy on production mode
+### Load jQuery from local file
+Step1. Make ``lib`` directory.  
 ```
-npm start
+node-decorate/
+  lib/
 ```
 
-### Load jQuery from local file
-TODO: later
+Step2. Put ``jquery.min.js`` that paste jquery codes.
+```
+node-decorate/
+  lib/
+    jquery.min.js
+```
+
+Step3. Change config file ``config.js``.
+```
+  useLocalJquery : true,
+```
 
 ### Start on port 80
-TODO: later
+Step1. Change config file ``config.js``.
+```
+  port : 80,
+```
+
+Step2. Start with "sudo"
+```
+$ sudo node index.js
+```
+or
+```
+$ sudo npm start
+```
