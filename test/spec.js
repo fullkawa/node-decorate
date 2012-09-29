@@ -8,6 +8,8 @@ describe('node-decorate', function() {
 	it('decorate HTML document(s)');
 	it('decorate XML document(s)');
 	
+	it('can send a PHP document as a HTML document.')
+	
 	it('does not send responses to request for other(except for HTML,XML) resources.');
 	
 	it('can run on clusters (only NODE_ENV=production)');

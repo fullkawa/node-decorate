@@ -38,6 +38,13 @@ describe('node-decorate', function() {
 			request('/_test/Node.js%20!/http/node-decorate-tests.s3-website-ap-northeast-1.amazonaws.com/', done).expects(200, doc);
 		});
 	});
+
+	describe('/http/ec2-175-41-197-98.ap-northeast-1.compute.amazonaws.com/index.php', function() {
+		it('send a response code: 200', function(done) {
+			var doc = fs.readFileSync(__dirname + '/check_docs/index_php.html').toString();
+			request('/http/ec2-175-41-197-98.ap-northeast-1.compute.amazonaws.com/index.php', done).expects(200, doc);
+		});
+	});
 });
 
 var request = function(target, done) {
